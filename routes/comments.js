@@ -56,33 +56,36 @@ router.get('/:postId', async (req, res) => {
   }
 });
 
-// // 게시글 수정 PUT
-router.put('/:_commentId', async (req, res) => {
+// 댓글 수정 PUT
+router.put('/:_commentId', authMiddleware, async (req, res) => {
   try {
     const { _commentId } = req.params;
-    const { password, content } = req.body;
-    const [comment] = await Comment.find({ _id: _commentId });
+    const { comment } = req.body;
+    const { nickname } = res.locals.user;
+    const [targetComment] = await Comment.find({ _id: _commentId });
 
-    if (!content) {
-      return res.status(400).json({
-        message: '댓글 내용을 입력해주세요.',
-      });
+    //# 403 댓글의 수정 권한이 존재하지 않는 경우  (로그인한 유저와 댓글 작성자가 일치해야 함.)
+    if (nickname !== targetComment.nickname) {
+      res.status(403).json({ message: '댓글의 수정 권한이 존재하지 않습니다.' });
+    } else if (!comment) {
+      res.status(412).json({ message: '댓글 내용을 입력해주세요.' });
+    } else if (!targetComment) {
+      res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다.' });
+    } else {
+      try {
+        await Comment.updateOne({ _id: _commentId }, { $set: { comment } });
+        res.status(200).json({ message: '댓글을 수정하였습니다.' });
+      } catch (error) {
+        res.status(400).json({ errorMessage: '댓글 수정이 정상적으로 처리되지 않았습니다.' });
+      }
     }
-    // commentId에 해당하는 댓글이 없을 경우 404
-    if (!comment) {
-      return res.status(404).json({ errorMessage: '댓글 조회에 실패하였습니다.' });
-    }
-
-    await Comment.updateOne({ _id: _commentId }, { $set: { content } });
-
-    res.status(200).json({ message: '게시글을 수정하였습니다.' });
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    return res.status(400).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
+    res.status(400).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
   }
 });
 
-// 게시글 삭제 DELETE
+// 댓글 삭제 DELETE
 router.delete('/:_commentId', async (req, res) => {
   try {
     const { _commentId } = req.params;
@@ -99,10 +102,6 @@ router.delete('/:_commentId', async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(400).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
   }
-
-  //   if (password !== post[0].password) {
-  //     return res.status(400).json({ success: false, errorMessage: '비밀번호가 틀렸습니다.' });
-  //   }
 });
 
 module.exports = router;
