@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Comment = require('../schemas/comment.js');
-const Post = require('../schemas/comment.js');
+const Post = require('../schemas/post.js');
 const authMiddleware = require('../middlewares/auth-middleware.js');
 
 //  POST 댓글 생성
@@ -12,18 +12,15 @@ router.post('/:postId', authMiddleware, async (req, res) => {
   try {
     const { postId } = req.params;
     const { comment } = req.body;
-    const { nickname } = res.locals.user;
-    console.log(postId);
-
-    const post = await Post.find({ postId });
-    console.log(post);
+    const { userId, nickname } = res.locals.user;
+    const post = await Post.find({ _id: postId });
 
     if (post.length === 0) {
       res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다.' });
     } else if (!comment) {
       return res.status(412).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
     } else {
-      await Comment.create({ postId, nickname, comment });
+      await Comment.create({ postId, userId, nickname, comment });
       res.status(200).json({ message: '댓글을 작성하였습니다.' });
     }
   } catch (error) {
@@ -37,12 +34,11 @@ router.get('/:_postId', async (req, res) => {
   try {
     const { _postId } = req.params;
     const comments = await Comment.find({ postId: _postId }); // 객체의 배열을 할당한다.
-    const data = comments.map((comment) => {
-      const { _id: commentId, user, content, createdAt } = comment;
+    const data = comments.map((item) => {
+      const { comment, createdAt } = item;
       return {
-        commentId,
-        user,
-        content,
+        commentId: item._id,
+        comment,
         createdAt,
       };
     });
