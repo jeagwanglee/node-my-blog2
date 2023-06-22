@@ -7,7 +7,7 @@ module.exports = async (req, res, next) => {
   const [authType, authToken] = (Authorization ?? '').split(' ');
 
   if (authType !== 'Bearer' || !authToken) {
-    return res.status(400).json({ errorMessage: '로그인 후에 이용할 수 있는 기능입니다.' });
+    return res.status(403).json({ errorMessage: '로그인 후에 이용할 수 있는 기능입니다.' });
   }
 
   try {
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     next();
   } catch (error) {
     console.error(err);
-    res.status(401).send({ errorMessage: '로그인 후 이용 가능한 기능입니다.' });
+    res.status(403).send({ errorMessage: '전달된 쿠키에서 오류가 발생했습니다.' });
     return;
   }
 };
