@@ -14,7 +14,6 @@ app.use('/api', routes);
 
 app.get('/', (req, res) => {
   res.send('정상 연결');
-  //   res.json({ result: 'complete' });
 });
 
 app.listen(port, () => {
