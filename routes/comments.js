@@ -47,6 +47,7 @@ router.get('/:postId', async (req, res) => {
         nickname: item.nickname,
         comment: item.comment,
         createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
     });
     res.json({ comments: result });
