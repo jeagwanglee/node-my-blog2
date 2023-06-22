@@ -10,8 +10,7 @@ const authMiddleware = require('../middlewares/auth-middleware.js');
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { title, content } = req.body;
-    const { _id, nickname } = res.locals.user;
-    const userId = _id.toString();
+    const { userId, nickname } = res.locals.user;
 
     if (!title || !content) {
       res.status(412).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
