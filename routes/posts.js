@@ -1,22 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../schemas/post.js');
+const authMiddleware = require('../middlewares/auth-middleware.js');
 
 //  1. 게시글 작성 POST
-router.post('/', async (req, res) => {
+// 토큰을 검사하여, 유효한 토큰일 경우에만 게시글 작성 가능
+// 제목, 작성 내용을 입력하기
+
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { user, password, title, content } = req.body;
-    await Post.create({ user, password, title, content });
-    res.status(200).json({ message: '게시글을 생성하였습니다.' });
+    const { title, content } = req.body;
+    const { _id, nickname } = res.locals.user;
+    const userId = _id.toString();
+
+    if (!title || !content) {
+      res.status(412).json({ message: '데이터 형식이 올바르지 않습니다.' });
+    } else if (typeof title !== 'string') {
+      res.status(412).json({ errorMessage: '게시글 제목의 형식이 일치하지 않습니다.' });
+    } else if (typeof content !== 'string') {
+      res.status(412).json({ errorMessage: '게시글 내용의 형식이 일치하지 않습니다.' });
+    } else {
+      const post = new Post({ userId, nickname, title, content });
+      await post.save();
+      res.status(200).json({ message: '게시글 작성에 성공했습니다.' });
+    }
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(400).json({
-      message: '데이터 형식이 올바르지 않습니다.',
+      message: '게시글 작성에 실패했습니다.',
     });
   }
 });
 
 // 2. 게시글 전체 목록 조회 GET
+// 제목, 작성자명(nickname), 작성 날짜를 조회하기
+// 작성 날짜 기준으로 내림차순 정렬하기
 router.get('/', async (req, res) => {
   try {
     const posts = await Post.find({}); // 객체의 배열을 할당한다.
