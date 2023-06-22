@@ -30,22 +30,29 @@ router.post('/:postId', authMiddleware, async (req, res) => {
 });
 
 // 2. 댓글 목록 조회 GET
-router.get('/:_postId', async (req, res) => {
+router.get('/:postId', async (req, res) => {
   try {
-    const { _postId } = req.params;
-    const comments = await Comment.find({ postId: _postId }); // 객체의 배열을 할당한다.
-    const data = comments.map((item) => {
-      const { comment, createdAt } = item;
+    const { postId } = req.params;
+    const post = await Post.find({ _id: postId });
+    const comments = await Comment.find({ postId });
+
+    if (post.length === 0) {
+      res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다.' });
+      return;
+    }
+    const result = comments.map((item) => {
       return {
         commentId: item._id,
-        comment,
-        createdAt,
+        userId: item.userId,
+        nickname: item.nickname,
+        comment: item.comment,
+        createdAt: item.createdAt,
       };
     });
-    res.json({ data });
+    res.json({ comments: result });
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    return res.status(400).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
+    return res.status(400).json({ errorMessage: '댓글 조회에 실패하였습니다.' });
   }
 });
 
