@@ -51,10 +51,14 @@ router.get('/', async (req, res) => {
     return res.json({ posts: data });
   } catch (error) {
     console.error(`Error: ${error.message}`);
+    return res.status(400).json({
+      message: '게시글 조회에 실패했습니다.',
+    });
   }
 });
 
 // 3. 게시글 상세 조회 GET
+// 제목, 작성자명(nickname), 작성 날짜, 작성 내용을 조회하기
 router.get('/:_postId', async (req, res) => {
   try {
     const { _postId } = req.params;
