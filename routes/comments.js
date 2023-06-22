@@ -86,21 +86,30 @@ router.put('/:_commentId', authMiddleware, async (req, res) => {
 });
 
 // 댓글 삭제 DELETE
-router.delete('/:_commentId', async (req, res) => {
+router.delete('/:_commentId', authMiddleware, async (req, res) => {
   try {
     const { _commentId } = req.params;
-    const { password } = req.body;
+    const { nickname } = res.locals.user;
+    const [targetComment] = await Comment.find({ _id: _commentId });
+    const [post] = await Post.find({ _id: targetComment.postId });
 
-    const comment = await Comment.find({ _id: _commentId }); // post가 배열로 반환됨.
-    if (comment.length === 0) {
-      return res.status(404).json({ errorMessage: '댓글 조회에 실패하였습니다.' });
+    if (!post) {
+      res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다.' });
+    } else if (nickname !== targetComment.nickname) {
+      res.status(403).json({ message: '댓글의 삭제 권한이 존재하지 않습니다.' });
+    } else if (!targetComment) {
+      res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다.' });
+    } else {
+      try {
+        await Comment.deleteOne({ _id: _commentId });
+        res.status(200).json({ errorMessage: '댓글을 삭제하였습니다.' });
+      } catch (error) {
+        res.status(400).json({ errorMessage: '댓글 삭제가 정상적으로 처리되지 않았습니다.' });
+      }
     }
-
-    await Comment.deleteOne({ _id: _commentId });
-    res.status(200).json({ errorMessage: '댓글을 삭제하였습니다.' });
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    return res.status(400).json({ errorMessage: '데이터 형식이 올바르지 않습니다.' });
+    res.status(400).json({ errorMessage: '댓글 삭제에 실패하였습니다.' });
   }
 });
 
