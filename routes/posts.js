@@ -37,17 +37,18 @@ router.post('/', authMiddleware, async (req, res) => {
 // 작성 날짜 기준으로 내림차순 정렬하기
 router.get('/', async (req, res) => {
   try {
-    const posts = await Post.find({}); // 객체의 배열을 할당한다.
+    const posts = await Post.find({}).sort({ createdAt: -1 });
     const data = posts.map((post) => {
-      const { _id: postId, user, title, createdAt } = post;
       return {
-        postId,
-        user,
-        title,
-        createdAt,
+        postId: post._id,
+        userId: post.userId,
+        nickname: post.nickname,
+        title: post.title,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
       };
     });
-    return res.json({ data });
+    return res.json({ posts: data });
   } catch (error) {
     console.error(`Error: ${error.message}`);
   }
