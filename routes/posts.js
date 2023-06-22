@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Post = require('../schemas/post.js');
 const authMiddleware = require('../middlewares/auth-middleware.js');
+const { isValidObjectId } = require('mongoose');
 
 //  1. 게시글 작성 POST
 // 토큰을 검사하여, 유효한 토큰일 경우에만 게시글 작성 가능
@@ -64,18 +65,23 @@ router.get('/:_postId', async (req, res) => {
     const { _postId } = req.params;
     const post = await Post.find({ _id: _postId });
 
-    const [data] = post.map((post) => {
-      const { _id: postId, user, title, content, createdAt } = post;
-      return {
-        postId,
-        user,
-        title,
-        content,
-        createdAt,
-      };
-    });
-
-    res.status(200).json({ data });
+    if (post.length === 1) {
+      const [result] = post.map((post) => {
+        const { _id: postId, userId, nickname, title, content, createdAt, updatedAt } = post;
+        return {
+          postId,
+          userId,
+          nickname,
+          title,
+          content,
+          createdAt,
+          updatedAt,
+        };
+      });
+      res.status(200).json({ result });
+    } else {
+      res.status(400).json({ message: '게시글이 존재하지 않습니다.' });
+    }
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
